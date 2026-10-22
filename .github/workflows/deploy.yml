@@ -44,6 +44,7 @@ jobs:
     name: Publish Docker Image
     needs: build-test
     runs-on: ubuntu-latest
+    environment: production
 
     outputs:
       digest: ${{ steps.push.outputs.digest }}
