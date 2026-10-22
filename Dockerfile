@@ -22,8 +22,8 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Run as non-root user
-RUN addgroup -S spring && \
-    adduser -S spring -G spring
+RUN addgroup --system spring && \
+    adduser --system --ingroup spring --no-create-home --disabled-login spring
 
 # Copy only executable JAR
 COPY --from=builder --chown=spring:spring \
