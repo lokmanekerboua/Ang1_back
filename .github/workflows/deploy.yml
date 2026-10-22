@@ -1,0 +1,164 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: taskflow-production
+  cancel-in-progress: false
+
+jobs:
+
+  # ========================================
+  # JOB 1: BUILD AND TEST
+  # ========================================
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build and run tests
+        run: mvn --batch-mode verify
+
+
+  # ========================================
+  # JOB 2: BUILD AND PUSH DOCKER IMAGE
+  # ========================================
+  docker-publish:
+    name: Publish Docker Image
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push latest
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKER_IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+
+  # ========================================
+  # JOB 3: DEPLOY TO SERVER VIA SSH
+  # ========================================
+  deploy:
+    name: Deploy to Production
+    needs: docker-publish
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Pull and deploy Docker image
+        env:
+          SERVER_HOST: ${{ vars.SERVER_HOST }}
+          SERVER_PORT: ${{ vars.SERVER_PORT }}
+          SERVER_USER: ${{ vars.SERVER_USER }}
+          IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKER_IMAGE_NAME }}
+          DIGEST: ${{ needs.docker-publish.outputs.digest }}
+        run: |
+          ssh -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -p "$SERVER_PORT" \
+              "$SERVER_USER@$SERVER_HOST" \
+              bash -s -- "$IMAGE" "$DIGEST" <<'REMOTE'
+          set -euo pipefail
+
+          IMAGE="$1"
+          DIGEST="$2"
+          CONTAINER="taskflow-api"
+          ENV_FILE="/opt/taskflow/.env"
+
+          test -f "$ENV_FILE"
+
+          echo "Pulling new image..."
+          docker pull "$IMAGE@$DIGEST"
+
+          OLD_IMAGE=$(docker image inspect \
+            --format '{{.Id}}' \
+            "$IMAGE:latest" 2>/dev/null || true)
+
+          docker tag "$IMAGE@$DIGEST" "$IMAGE:latest"
+
+          echo "Replacing application container..."
+          docker rm -f "$CONTAINER" 2>/dev/null || true
+
+          docker run -d \
+            --name "$CONTAINER" \
+            --restart unless-stopped \
+            --memory=512m \
+            --cpus=1 \
+            --env-file "$ENV_FILE" \
+            -p 8080:8080 \
+            "$IMAGE:latest"
+
+          sleep 5
+
+          if [ "$(docker inspect \
+            --format '{{.State.Running}}' \
+            "$CONTAINER")" != "true" ]; then
+            docker logs "$CONTAINER"
+            exit 1
+          fi
+
+          echo "Cleaning old application image..."
+
+          NEW_IMAGE=$(docker image inspect \
+            --format '{{.Id}}' "$IMAGE:latest")
+
+          if [ -n "$OLD_IMAGE" ] && \
+             [ "$OLD_IMAGE" != "$NEW_IMAGE" ]; then
+            docker image rm "$OLD_IMAGE" || true
+          fi
+
+          echo "Deployment completed."
+          REMOTE
