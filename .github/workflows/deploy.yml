@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: taskflow-production
+  group: ang1_back-production
   cancel-in-progress: false
 
 jobs:
@@ -115,8 +115,8 @@ jobs:
 
           IMAGE="$1"
           DIGEST="$2"
-          CONTAINER="taskflow-api"
-          ENV_FILE="/opt/taskflow/.env"
+          CONTAINER="ang1_back"
+          ENV_FILE="/opt/ang1_back/.env"
 
           test -f "$ENV_FILE"
 
