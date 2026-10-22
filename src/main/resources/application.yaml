@@ -1,0 +1,58 @@
+
+spring:
+  application:
+    name: ang1_back
+
+  # PostgreSQL Database
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:postgres}
+    username: ${DATABASE_USERNAME:appuser}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+    # HikariCP Connection Pool
+    hikari:
+      pool-name: TaskFlowHikariPool
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 120000
+      leak-detection-threshold: 60000
+
+  # JPA / Hibernate
+  jpa:
+    open-in-view: false
+
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+        default_batch_fetch_size: 25
+
+  # Jackson JSON
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      fail-on-empty-beans: false
+
+# HTTP Server
+server:
+  port: ${SERVER_PORT:8080}
+
+# Logging
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:DEBUG}
+    org.hibernate.orm.jdbc.bind: ${SQL_BIND_LOG_LEVEL:OFF}
+    com.zaxxer.hikari: WARN
