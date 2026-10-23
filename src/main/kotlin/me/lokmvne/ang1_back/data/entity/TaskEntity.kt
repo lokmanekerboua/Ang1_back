@@ -5,7 +5,7 @@ import me.lokmvne.ang1_back.data.utils.TaskStatus
 
 @Entity
 @Table(name = "tasks")
-class Task(
+class TaskEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
@@ -21,5 +21,5 @@ class Task(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    var user: User? = null
+    var user: UserEntity? = null
 )

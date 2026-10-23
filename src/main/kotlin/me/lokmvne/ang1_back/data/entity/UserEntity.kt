@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "users")
-class User(
+class UserEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
@@ -19,9 +19,9 @@ class User(
     var password: String = "",
 
     @OneToMany(
-        mappedBy = "user",
+        mappedBy = "userEntity",
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
-    var tasks: MutableList<Task> = mutableListOf()
+    var taskEntities: MutableList<TaskEntity> = mutableListOf()
 )
