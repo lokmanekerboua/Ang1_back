@@ -141,7 +141,6 @@ jobs:
             --memory=512m \
             --cpus=1 \
             --env-file "$ENV_FILE" \
-            -p 5020:8080 \
             "$IMAGE:latest"
 
           sleep 5
