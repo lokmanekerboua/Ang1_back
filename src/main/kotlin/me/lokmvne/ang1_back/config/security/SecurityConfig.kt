@@ -73,24 +73,28 @@ class SecurityConfig(
                 )
             }
             .authorizeHttpRequests {
-                it.requestMatchers(
-                    "/swagger-ui.html",
-                    "/swagger-ui/**",
-                    "/v3/api-docs",
-                    "/v3/api-docs/**"
-                ).permitAll()
-
+                // Public endpoints
                 it.requestMatchers(
                     HttpMethod.POST,
                     "/api/auth/register",
                     "/api/auth/login"
                 ).permitAll()
 
+                // Swagger
+                it.requestMatchers(
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/v3/api-docs/**",
+                    "/v3/api-docs"
+                ).permitAll()
+
+                // CORS preflight
                 it.requestMatchers(
                     HttpMethod.OPTIONS,
                     "/**"
                 ).permitAll()
 
+                // All other endpoints require JWT
                 it.anyRequest().authenticated()
             }
             .oauth2ResourceServer {
