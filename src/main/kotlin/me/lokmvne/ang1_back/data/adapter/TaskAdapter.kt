@@ -18,8 +18,24 @@ class TaskAdapter(
     private val taskRepository: TaskRepository,
     private val userRepository: UserRepository
 ) : TaskPort {
-    override fun createTask(task: CreateTaskRequest): TaskResponse? {
-        return taskRepository.save(task.toTaskEntity()).toTaskResponse()
+    override fun createTask(
+        task: CreateTaskRequest,
+        userId: Long
+    ): TaskResponse {
+
+        val user = userRepository.findById(userId)
+            .orElseThrow {
+                ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "User not found"
+                )
+            }
+
+        val entity = task.toTaskEntity().apply {
+            this.user = user
+        }
+
+        return taskRepository.save(entity).toTaskResponse()
     }
 
     override fun updateTask(
