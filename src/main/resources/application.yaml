@@ -7,10 +7,6 @@ spring:
   application:
     name: ang1_back
 
-  app:
-    jwt:
-      secret: ${JWT_SECRET}
-
   # PostgreSQL Database
   datasource:
     url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
@@ -64,3 +60,9 @@ logging:
     org.hibernate.SQL: ${SQL_LOG_LEVEL:DEBUG}
     org.hibernate.orm.jdbc.bind: ${SQL_BIND_LOG_LEVEL:OFF}
     com.zaxxer.hikari: WARN
+
+
+# JWT Configuration (outside spring)
+app:
+  jwt:
+    secret: ${JWT_SECRET}
