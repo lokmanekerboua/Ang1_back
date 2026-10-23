@@ -74,13 +74,22 @@ class SecurityConfig(
             }
             .authorizeHttpRequests {
                 it.requestMatchers(
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs",
+                    "/v3/api-docs/**"
+                ).permitAll()
+
+                it.requestMatchers(
                     HttpMethod.POST,
                     "/api/auth/register",
                     "/api/auth/login"
                 ).permitAll()
 
-                it.requestMatchers(HttpMethod.OPTIONS, "/**")
-                    .permitAll()
+                it.requestMatchers(
+                    HttpMethod.OPTIONS,
+                    "/**"
+                ).permitAll()
 
                 it.anyRequest().authenticated()
             }
