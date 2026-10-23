@@ -19,7 +19,7 @@ class UserEntity(
     var password: String = "",
 
     @OneToMany(
-        mappedBy = "userEntity",
+        mappedBy = "user",
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
