@@ -27,6 +27,13 @@ class SecurityConfig(
     private val jwtSecret: String
 ) {
 
+    init {
+        require(jwtSecret.toByteArray(Charsets.UTF_8).size >= 32) {
+            "JWT secret must contain at least 32 bytes"
+        }
+    }
+
+
     @Bean
     fun passwordEncoder(): PasswordEncoder =
         BCryptPasswordEncoder()
