@@ -6,7 +6,7 @@ import me.lokmvne.ang1_back.domain.dto.user.UpdateUserRequest
 import me.lokmvne.ang1_back.domain.dto.user.UserResponse
 
 fun UserEntity.toUserResponse() = UserResponse(
-    id = this.id!!,
+    id = requireNotNull(this.id),
     email = this.email,
     name = this.email,
 )

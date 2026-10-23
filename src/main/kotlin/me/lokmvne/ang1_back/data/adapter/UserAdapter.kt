@@ -7,11 +7,13 @@ import me.lokmvne.ang1_back.domain.Port.UserPort
 import me.lokmvne.ang1_back.domain.dto.user.CreateUserRequest
 import me.lokmvne.ang1_back.domain.dto.user.UpdateUserRequest
 import me.lokmvne.ang1_back.domain.dto.user.UserResponse
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 
 @Component
 class UserAdapter(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder
 ) : UserPort {
     override fun findUserById(id: Long): UserResponse? =
         userRepository.findById(id).map { it.toUserResponse() }.orElse(null)
@@ -26,7 +28,8 @@ class UserAdapter(
     }
 
     override fun createUser(user: CreateUserRequest): UserResponse? {
-        return userRepository.save(user.toUserEntity()).toUserResponse()
+        val entity = user.toUserEntity()
+        return userRepository.save(entity).toUserResponse()
     }
 
     override fun updateUser(
@@ -47,7 +50,12 @@ class UserAdapter(
     }
 
     override fun deleteUserById(id: Long): Boolean {
-        TODO("Not yet implemented")
+        return if (userRepository.existsById(id)) {
+            userRepository.deleteById(id)
+            true
+        } else {
+            false
+        }
     }
 
 }
