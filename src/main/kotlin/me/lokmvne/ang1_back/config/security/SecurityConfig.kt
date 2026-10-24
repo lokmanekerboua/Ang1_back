@@ -106,7 +106,7 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val config = CorsConfiguration().apply {
-            allowedOrigins = listOf("*")
+            allowedOriginPatterns = listOf("*")
             allowedMethods = listOf(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
             )
