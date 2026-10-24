@@ -1,10 +1,12 @@
 package me.lokmvne.ang1_back.domain.service
 
-import me.lokmvne.ang1_back.domain.Port.TaskPort
-import me.lokmvne.ang1_back.domain.dto.task.CreateTaskRequest
-import me.lokmvne.ang1_back.domain.dto.task.UpdateTaskRequest
-import me.lokmvne.ang1_back.domain.dto.task.TaskResponse
 import me.lokmvne.ang1_back.data.utils.TaskStatus
+import me.lokmvne.ang1_back.domain.mappers.toTask
+import me.lokmvne.ang1_back.domain.mappers.toTaskResponse
+import me.lokmvne.ang1_back.domain.model.Task
+import me.lokmvne.ang1_back.domain.port.TaskPort
+import me.lokmvne.ang1_back.presentation.dto.task.TaskResponse
+import me.lokmvne.ang1_back.presentation.dto.task.UpdateTaskRequest
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -15,10 +17,10 @@ class TaskService(
 ) {
 
     fun createTask(
-        request: CreateTaskRequest,
+        request: Task,
         userId: Long
     ): TaskResponse {
-        return taskPort.createTask(request, userId)
+        return taskPort.createTask(request, userId)?.toTaskResponse()
             ?: throw ResponseStatusException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Unable to create task"
@@ -36,19 +38,21 @@ class TaskService(
             )
 
         checkOwnership(task, userId)
-        return task
+        return task.toTaskResponse()
     }
 
-    fun getMyTasks(userId: Long): MutableCollection<TaskResponse> {
-        return taskPort.findTasksByUserId(userId)
+    fun getMyTasks(userId: Long): MutableList<TaskResponse> {
+        return taskPort.findTasksByUserId(userId).map(Task::toTaskResponse).toMutableList()
     }
 
     fun getMyTasksByStatus(
         status: TaskStatus,
         userId: Long
-    ): List<TaskResponse> {
+    ): MutableList<TaskResponse> {
         return taskPort.findTasksByUserId(userId)
             .filter { it.status == status }
+            .map(Task::toTaskResponse)
+            .toMutableList()
     }
 
     fun updateTask(
@@ -56,12 +60,17 @@ class TaskService(
         request: UpdateTaskRequest,
         userId: Long
     ): TaskResponse {
-        val task = getTaskById(id, userId)
-
-        return taskPort.updateTask(task.id, request)
+        val task = taskPort.findTaskById(id)
             ?: throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "Task not found"
+            )
+        checkOwnership(task, userId)
+        requireNotNull(task.id)
+        return taskPort.updateTask(task.id, request.toTask())?.toTaskResponse()
+            ?: throw ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Unable to update task"
             )
     }
 
@@ -80,7 +89,7 @@ class TaskService(
     }
 
     private fun checkOwnership(
-        task: TaskResponse,
+        task: Task,
         userId: Long
     ) {
         if (task.userId != userId) {

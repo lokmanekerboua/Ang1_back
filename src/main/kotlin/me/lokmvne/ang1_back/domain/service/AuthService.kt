@@ -1,12 +1,13 @@
 package me.lokmvne.ang1_back.domain.service
 
 import me.lokmvne.ang1_back.config.security.JwtService
-import me.lokmvne.ang1_back.data.entity.UserEntity
-import me.lokmvne.ang1_back.data.mappers.toUserResponse
-import me.lokmvne.ang1_back.data.repository.UserRepository
-import me.lokmvne.ang1_back.domain.dto.auth.*
-import me.lokmvne.ang1_back.domain.dto.user.CreateUserRequest
-import me.lokmvne.ang1_back.domain.dto.user.UserResponse
+import me.lokmvne.ang1_back.domain.mappers.toUserResponse
+import me.lokmvne.ang1_back.domain.model.User
+import me.lokmvne.ang1_back.domain.port.UserPort
+import me.lokmvne.ang1_back.presentation.dto.auth.AuthResponse
+import me.lokmvne.ang1_back.presentation.dto.auth.LoginRequest
+import me.lokmvne.ang1_back.presentation.dto.user.CreateUserRequest
+import me.lokmvne.ang1_back.presentation.dto.user.UserResponse
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -15,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException
 
 @Service
 class AuthService(
-    private val userRepository: UserRepository,
+    private val userPort: UserPort,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService
 ) {
@@ -33,20 +34,21 @@ class AuthService(
             it
         }
 
-        if (userRepository.findByEmail(email) != null) {
+        if (userPort.findUserByEmail(email) != null) {
             throw ResponseStatusException(
                 HttpStatus.CONFLICT,
                 "Email already registered"
             )
         }
 
-        val user = UserEntity(
+        val user = User(
+            id = null,
             name = request.name.trim(),
             email = email.lowercase(),
             password = password
         )
 
-        val savedUser = userRepository.save(user)
+        val savedUser = userPort.createUser(user).toUserResponse()
 
         return generateAuthResponse(savedUser)
     }
@@ -54,7 +56,7 @@ class AuthService(
     fun login(request: LoginRequest): AuthResponse {
         val email = request.email.trim().lowercase()
 
-        val user = userRepository.findByEmail(email)
+        val user = userPort.findUserByEmail(email)
             ?: throw invalidCredentials()
 
         if (!passwordEncoder.matches(
@@ -65,24 +67,21 @@ class AuthService(
             throw invalidCredentials()
         }
 
-        return generateAuthResponse(user)
+        return generateAuthResponse(user.toUserResponse())
     }
 
     @Transactional(readOnly = true)
     fun getCurrentUser(userId: Long): UserResponse {
-        val user = userRepository.findById(userId)
-            .orElseThrow {
-                ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "User no longer exists"
-                )
-            }
+        val user = userPort.findUserById(userId) ?: throw ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "User not found"
+        )
 
         return user.toUserResponse()
     }
 
     private fun generateAuthResponse(
-        user: UserEntity
+        user: UserResponse
     ): AuthResponse {
 
         val token = jwtService.generateToken(

@@ -1,4 +1,4 @@
-package me.lokmvne.ang1_back.domain.dto.user
+package me.lokmvne.ang1_back.presentation.dto.user
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank

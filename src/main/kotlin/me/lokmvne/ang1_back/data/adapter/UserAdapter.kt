@@ -1,41 +1,37 @@
 package me.lokmvne.ang1_back.data.adapter
 
+import me.lokmvne.ang1_back.data.mappers.toUser
 import me.lokmvne.ang1_back.data.mappers.toUserEntity
-import me.lokmvne.ang1_back.data.mappers.toUserResponse
 import me.lokmvne.ang1_back.data.repository.UserRepository
-import me.lokmvne.ang1_back.domain.Port.UserPort
-import me.lokmvne.ang1_back.domain.dto.user.CreateUserRequest
-import me.lokmvne.ang1_back.domain.dto.user.UpdateUserRequest
-import me.lokmvne.ang1_back.domain.dto.user.UserResponse
-import org.springframework.security.crypto.password.PasswordEncoder
+import me.lokmvne.ang1_back.domain.model.User
+import me.lokmvne.ang1_back.domain.port.UserPort
 import org.springframework.stereotype.Component
 
 @Component
 class UserAdapter(
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
 ) : UserPort {
-    override fun findUserById(id: Long): UserResponse? =
-        userRepository.findById(id).map { it.toUserResponse() }.orElse(null)
+    override fun findUserById(id: Long): User? =
+        userRepository.findById(id).map { it.toUser() }.orElse(null)
 
 
-    override fun findUserByName(name: String): MutableCollection<UserResponse> {
-        return userRepository.findAllByName(name).map { it.toUserResponse() }.toMutableList()
+    override fun findUserByName(name: String): MutableCollection<User> {
+        return userRepository.findAllByName(name).map { it.toUser() }.toMutableList()
     }
 
-    override fun findUserByEmail(email: String): UserResponse? {
-        return userRepository.findByEmail(email)?.toUserResponse()
+    override fun findUserByEmail(email: String): User? {
+        return userRepository.findByEmail(email)?.toUser()
     }
 
-    override fun createUser(user: CreateUserRequest): UserResponse? {
+    override fun createUser(user: User): User {
         val entity = user.toUserEntity()
-        return userRepository.save(entity).toUserResponse()
+        return userRepository.save(entity).toUser()
     }
 
     override fun updateUser(
         id: Long,
-        user: UpdateUserRequest
-    ): UserResponse? {
+        user: User
+    ): User? {
         val existingUser = userRepository.findById(id).orElseThrow {
             throw Exception("User not found with id: $id")
         }
@@ -46,7 +42,7 @@ class UserAdapter(
                 password = user.password ?: password
             }
         }
-        return userRepository.save(existingUser).toUserResponse()
+        return userRepository.save(existingUser).toUser()
     }
 
     override fun deleteUserById(id: Long): Boolean {
@@ -57,5 +53,4 @@ class UserAdapter(
             false
         }
     }
-
 }

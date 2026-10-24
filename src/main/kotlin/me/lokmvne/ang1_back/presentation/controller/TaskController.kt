@@ -1,13 +1,14 @@
-package me.lokmvne.ang1_back.presentation
+package me.lokmvne.ang1_back.presentation.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import me.lokmvne.ang1_back.data.utils.TaskStatus
-import me.lokmvne.ang1_back.domain.dto.task.CreateTaskRequest
-import me.lokmvne.ang1_back.domain.dto.task.UpdateTaskRequest
-import me.lokmvne.ang1_back.domain.dto.task.TaskResponse
+import me.lokmvne.ang1_back.domain.mappers.toTask
+import me.lokmvne.ang1_back.presentation.dto.task.CreateTaskRequest
+import me.lokmvne.ang1_back.presentation.dto.task.UpdateTaskRequest
+import me.lokmvne.ang1_back.presentation.dto.task.TaskResponse
 import me.lokmvne.ang1_back.domain.service.TaskService
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -33,7 +34,7 @@ class TaskController(
         @Parameter(hidden = true)
         @AuthenticationPrincipal jwt: Jwt
     ): TaskResponse {
-        return taskService.createTask(request, jwt.userId())
+        return taskService.createTask(request.toTask(), jwt.userId())
     }
 
     @Operation(summary = "Get all my tasks")
@@ -51,7 +52,7 @@ class TaskController(
         @PathVariable status: TaskStatus,
         @Parameter(hidden = true)
         @AuthenticationPrincipal jwt: Jwt
-    ): List<TaskResponse> {
+    ): MutableList<TaskResponse> {
         return taskService.getMyTasksByStatus(
             status,
             jwt.userId()
