@@ -1,11 +1,12 @@
-package me.lokmvne.ang1_back.presentation
+package me.lokmvne.ang1_back.presentation.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import me.lokmvne.ang1_back.domain.dto.user.UpdateUserRequest
-import me.lokmvne.ang1_back.domain.dto.user.UserResponse
+import me.lokmvne.ang1_back.domain.mappers.toUser
+import me.lokmvne.ang1_back.presentation.dto.user.UpdateUserRequest
+import me.lokmvne.ang1_back.presentation.dto.user.UserResponse
 import me.lokmvne.ang1_back.domain.service.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -54,7 +55,7 @@ class UserController(
     ): UserResponse {
         checkOwnership(id, jwt)
 
-        return userService.updateUser(id, request)
+        return userService.updateUser(id, request.toUser())
     }
 
     @Operation(summary = "Delete user account")

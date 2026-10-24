@@ -25,7 +25,7 @@ class JwtService(
             .issuer("ang1-back")
             .subject(userId.toString())
             .issuedAt(now)
-            .expiresAt(now.plus(1, ChronoUnit.HOURS))
+            .expiresAt(now.plus(24, ChronoUnit.DAYS))
             .claim("email", email)
             .build()
 

@@ -1,13 +1,14 @@
-package me.lokmvne.ang1_back.presentation
+package me.lokmvne.ang1_back.presentation.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.validation.Valid
-import me.lokmvne.ang1_back.domain.dto.auth.*
-import me.lokmvne.ang1_back.domain.dto.user.CreateUserRequest
-import me.lokmvne.ang1_back.domain.dto.user.UserResponse
+import me.lokmvne.ang1_back.presentation.dto.user.CreateUserRequest
+import me.lokmvne.ang1_back.presentation.dto.user.UserResponse
 import me.lokmvne.ang1_back.domain.service.AuthService
+import me.lokmvne.ang1_back.presentation.dto.auth.AuthResponse
+import me.lokmvne.ang1_back.presentation.dto.auth.LoginRequest
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt

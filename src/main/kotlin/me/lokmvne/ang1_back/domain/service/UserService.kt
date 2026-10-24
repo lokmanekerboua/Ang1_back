@@ -1,8 +1,10 @@
 package me.lokmvne.ang1_back.domain.service
 
-import me.lokmvne.ang1_back.domain.Port.UserPort
-import me.lokmvne.ang1_back.domain.dto.user.UpdateUserRequest
-import me.lokmvne.ang1_back.domain.dto.user.UserResponse
+import me.lokmvne.ang1_back.domain.mappers.toUserResponse
+import me.lokmvne.ang1_back.domain.model.User
+import me.lokmvne.ang1_back.domain.port.UserPort
+import me.lokmvne.ang1_back.presentation.dto.user.UpdateUserRequest
+import me.lokmvne.ang1_back.presentation.dto.user.UserResponse
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -13,7 +15,7 @@ class UserService(
 ) {
 
     fun getUserById(id: Long): UserResponse {
-        return userPort.findUserById(id)
+        return userPort.findUserById(id)?.toUserResponse()
             ?: throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "User not found"
@@ -26,9 +28,9 @@ class UserService(
 
     fun updateUser(
         id: Long,
-        request: UpdateUserRequest
+        request: User
     ): UserResponse {
-        return userPort.updateUser(id, request)
+        return userPort.updateUser(id, request)?.toUserResponse()
             ?: throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "User not found"

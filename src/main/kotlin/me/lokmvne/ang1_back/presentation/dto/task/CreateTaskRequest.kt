@@ -1,4 +1,4 @@
-package me.lokmvne.ang1_back.domain.dto.task
+package me.lokmvne.ang1_back.presentation.dto.task
 
 import me.lokmvne.ang1_back.data.utils.TaskStatus
 
